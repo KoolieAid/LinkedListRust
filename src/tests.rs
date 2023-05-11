@@ -57,3 +57,14 @@ fn remove_element() {
 
     assert!(list.get(1).is_err());
 }
+
+#[test]
+fn remove_on_empty() {
+    let mut list = create_list::<i32>();
+    assert!(list.remove(0).is_ok());
+    assert!(list.remove(0).is_err());
+
+    let mut list: LinkedList<i32> = LinkedList::new_empty();
+    assert!(list.remove(0).is_err());
+
+}

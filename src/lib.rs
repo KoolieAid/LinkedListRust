@@ -16,7 +16,7 @@ struct Node<T> {
 
 #[derive(Debug)]
 pub struct LinkedList<T> {
-    head: Node<T>,
+    head: Option<Node<T>>,
     size: usize,
 }
 
@@ -27,7 +27,17 @@ impl<T> LinkedList<T> {
             next: None,
         };
 
-        LinkedList { head, size: 1 }
+        LinkedList {
+            head: Some(head),
+            size: 1,
+        }
+    }
+
+    pub fn new_empty() -> LinkedList<T> {
+        LinkedList {
+            head: None,
+            size: 0,
+        }
     }
 
     pub fn add(&mut self, data: T) -> Result<(), &'static str>
@@ -39,7 +49,16 @@ impl<T> LinkedList<T> {
             next: None,
         };
 
-        let mut iter: &mut Node<T> = &mut self.head;
+        match &self.head {
+            Some(_) => {}
+            None => {
+                self.head = Some(new);
+                self.size += 1;
+                return Ok(());
+            }
+        }
+
+        let mut iter: &mut Node<T> = self.head.as_mut().unwrap();
 
         while iter.next.is_some() {
             // println!("yo");
@@ -64,16 +83,20 @@ impl<T> LinkedList<T> {
             _ => {}
         }
 
-        let mut iter: &mut Node<T> = &mut self.head;
+        if self.size == 1 {
+            let data = Rc::try_unwrap(self.head.take().unwrap().data).unwrap();
+
+            self.size -= 1;
+            return Ok(data.into_inner());
+        }
+
+        let mut iter: &mut Node<T> = self.head.as_mut().ok_or("List is already empty")?;
 
         for i in 0..index - 1 {
             iter = iter.next.as_mut().unwrap();
         }
 
-        let item: Box<Node<T>> = iter
-            .next
-            .take()
-            .ok_or("Yea I havent figured out empty lists and im lazy to do it")?;
+        let item: Box<Node<T>> = iter.next.take().ok_or("Edge case scenario idk")?;
 
         let data = Rc::try_unwrap(item.data).expect("item.data has multiple references");
 
@@ -93,7 +116,7 @@ impl<T> LinkedList<T> {
             _ => {}
         }
 
-        let mut iter: &mut Node<T> = &mut self.head;
+        let mut iter: &mut Node<T> = self.head.as_mut().ok_or("Empty List")?;
 
         for i in 0..index {
             iter = iter.next.as_mut().unwrap();
